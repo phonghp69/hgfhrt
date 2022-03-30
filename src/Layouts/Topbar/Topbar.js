@@ -4,29 +4,17 @@ import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
-import {useSelector} from 'react-redux';
-import { authenticationService } from '../../Services/authentication.service';
-import { history } from '../../_helpers/history';
-class Topbar extends React.Component  {
-  constructor(props) {
-    super(props);
 
-    this.state = {
-        currentUser: null
-    };
-}
+function Topbar() {
+  const token = localStorage.getItem('token');
+  const navigate = useNavigate();
+  function onLogoutClicked() {
+    localStorage.setItem('token', '');
+    localStorage.setItem('userId', '');
+    navigate('/');
+    window.location.reload();
 
-componentDidMount() {
-    authenticationService.currentUser.subscribe(x => this.setState({ currentUser: x }));
-}
-
-logout() {
-    authenticationService.logout();
-    history.push('/login');
-}
-
-render() {
-  const { currentUser } = this.state;
+  }
     return (
     <div>
         <AppBar position="static" color="error">
@@ -34,19 +22,14 @@ render() {
           <Typography variant="h6" component="div" >
             Home
           </Typography>
-          {!currentUser ? (
+          {!token ? (
           <Button color="inherit" href="/login">Login</Button>
            
         ) : (
-          <>
-          <p>Hi, <span>
-            {currentUser}
-            </span>
-            </p>
-          <Button color="inherit" onClick={this.Logout}>
+          
+          <Button color="inherit" onClick={onLogoutClicked}>
             Logout
           </Button>
-          </>
         )}
          
         </Toolbar>
@@ -54,5 +37,5 @@ render() {
     </div>  
     );
 }
-}
-export default {Topbar};
+
+export default Topbar;

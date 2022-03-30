@@ -1,77 +1,78 @@
-import React from "react";
-import { Formik, Field, Form, ErrorMessage } from 'formik';
-import * as Yup from "yup"
+import React, {  useState } from "react";
+import { useNavigate } from 'react-router-dom';
+import authService from "../../Services/auth-service";
+import 'bootstrap/dist/css/bootstrap.min.css';
+import { Button, Form, Col } from 'react-bootstrap';
+import './login.css';
 
-import { authenticationService } from '../../Services/authentication.service';
+const Login = () => {
+    const [userName, setUsername] = useState("");
+    const [password, setPassword] = useState("");
+    const [errMessage, setErrMessage] = useState("");
+
+    const navigate = useNavigate();
 
 
-export class LoginPage extends React.Component {
-    constructor(props) {
-        super(props);
-
-        // redirect to home if already logged in
-        if (authenticationService.currentUserValue) { 
-            this.props.history.push('/');
+    const handleLogin = async (e) => {
+        e.preventDefault();
+        try {
+            await authService.login(userName, password).then(
+                (response) => {
+                    localStorage.setItem("token", response.token)                 
+                    localStorage.setItem("userName",response.username)
+                    navigate('/');
+                    window.location.reload();
+                },
+                (error) => {
+                    if (error?.response.status === 400) { setErrMessage("Username or password is incorrect. Please try again?") }
+                }
+            )
+        } catch (err) {
+            console.log(err)
         }
     }
 
-    render() {
-        return (
-            <div>
-                <div className="alert alert-info">
-                    Username: test<br />
-                    Password: test
-                </div>
-                <h2>Login</h2>
-                <Formik
-                    initialValues={{
-                        username: '',
-                        password: ''
-                    }}
-                    validationSchema={Yup.object().shape({
-                        username: Yup.string().required('Username is required'),
-                        password: Yup.string().required('Password is required')
-                    })}
-                    onSubmit={({ username, password }, { setStatus, setSubmitting }) => {
-                        setStatus();
-                        authenticationService.login(username, password)
-                            .then(
-                                user => {
-                                    const { from } = this.props.location.state || { from: { pathname: "/" } };
-                                    this.props.history.push(from);
-                                },
-                                error => {
-                                    setSubmitting(false);
-                                    setStatus(error);
-                                }
-                            );
-                    }}
-                    render={({ errors, status, touched, isSubmitting }) => (
-                        <Form>
-                            <div className="form-group">
-                                <label htmlFor="username">Username</label>
-                                <Field name="username" type="text" className={'form-control' + (errors.username && touched.username ? ' is-invalid' : '')} />
-                                <ErrorMessage name="username" component="div" className="invalid-feedback" />
-                            </div>
-                            <div className="form-group">
-                                <label htmlFor="password">Password</label>
-                                <Field name="password" type="password" className={'form-control' + (errors.password && touched.password ? ' is-invalid' : '')} />
-                                <ErrorMessage name="password" component="div" className="invalid-feedback" />
-                            </div>
-                            <div className="form-group">
-                                <button type="submit" className="btn btn-primary" disabled={isSubmitting}>Login</button>
-                                {isSubmitting &&
-                                    <img src="data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQgAAAGJiYoKCgpKSkiH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh+QQJCgAAACwAAAAAEAAQAAADMwi63P4wyklrE2MIOggZnAdOmGYJRbExwroUmcG2LmDEwnHQLVsYOd2mBzkYDAdKa+dIAAAh+QQJCgAAACwAAAAAEAAQAAADNAi63P5OjCEgG4QMu7DmikRxQlFUYDEZIGBMRVsaqHwctXXf7WEYB4Ag1xjihkMZsiUkKhIAIfkECQoAAAAsAAAAABAAEAAAAzYIujIjK8pByJDMlFYvBoVjHA70GU7xSUJhmKtwHPAKzLO9HMaoKwJZ7Rf8AYPDDzKpZBqfvwQAIfkECQoAAAAsAAAAABAAEAAAAzMIumIlK8oyhpHsnFZfhYumCYUhDAQxRIdhHBGqRoKw0R8DYlJd8z0fMDgsGo/IpHI5TAAAIfkECQoAAAAsAAAAABAAEAAAAzIIunInK0rnZBTwGPNMgQwmdsNgXGJUlIWEuR5oWUIpz8pAEAMe6TwfwyYsGo/IpFKSAAAh+QQJCgAAACwAAAAAEAAQAAADMwi6IMKQORfjdOe82p4wGccc4CEuQradylesojEMBgsUc2G7sDX3lQGBMLAJibufbSlKAAAh+QQJCgAAACwAAAAAEAAQAAADMgi63P7wCRHZnFVdmgHu2nFwlWCI3WGc3TSWhUFGxTAUkGCbtgENBMJAEJsxgMLWzpEAACH5BAkKAAAALAAAAAAQABAAAAMyCLrc/jDKSatlQtScKdceCAjDII7HcQ4EMTCpyrCuUBjCYRgHVtqlAiB1YhiCnlsRkAAAOwAAAAAAAAAAAA==" />
-                                }
-                            </div>
-                            {status &&
-                                <div className={'alert alert-danger'}>{status}</div>
-                            }
-                        </Form>
-                    )}
-                />
-            </div>
-        )
-    }
-}
+    return (
+        <div className="App">
+            {localStorage.getItem("token") ?
+                (<div>Login</div>) :
+                (<Form onSubmit={handleLogin}>
+                    <Form.Group className="mb-3" controlId="formBasicEmail">
+                        <div className="center_Form">
+                            <Col sm={3}>
+                                <lable>User</lable>
+                                <Form.Control
+                                    placeholder="Enter Username"
+                                    type="text"
+                                    name="username"
+                                    value={userName}
+                                    onChange={(e) => setUsername(e.target.value)}
+                                    required />
+                            </Col>
+                        </div>
+                    </Form.Group>
 
+                    <Form.Group className="mb-3" controlId="formBasicPassword">
+                        <div className="center_Form">
+                            <Col sm={3} >
+                                <Form.Control
+                                    type="password"
+                                    name="password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    placeholder="Password"
+                                    required />
+                            </Col>
+                        </div>
+                    </Form.Group>
+                    <label style={{ color: 'red', fontSize: '10px', fontWeight: 'bold' }}>{errMessage}</label>
+                    <div>
+                        <Button variant="primary" type="submit">
+                            Login
+                        </Button>
+                    </div>
+                </Form>)}
+        </div>
+    )
+}
+export default Login;
